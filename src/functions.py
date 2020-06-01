@@ -1,13 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import numpy as np
 import itertools
 from sklearn.metrics import confusion_matrix
 import os
+from sklearn.metrics import roc_auc_score
 
 def save_metrics(model, X, y, target_names, batch_size, path):
     y_pred = model.predict(X, batch_size=batch_size)
     y_pred = np.argmax(y_pred, axis=1)
+
+    # https://stackoverflow.com/a/51295451
+    roc_score = roc_auc_score(y, 1 - y_pred.reshape(-1, 1))
 
     cm = confusion_matrix(y.argmax(axis=1), y_pred)
 
@@ -19,7 +22,7 @@ def save_metrics(model, X, y, target_names, batch_size, path):
 
     plt.figure(figsize=(8, 6))
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title('Confusion Matrix')
+    plt.title('Confusion Matrix {:.4f}'.format(roc_score))
     plt.colorbar()
 
     tick_marks = np.arange(len(target_names))
