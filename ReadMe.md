@@ -1,5 +1,5 @@
 # Classifying Alzheimer Disease with Convolutional Neural Networks from MRI
-> The goal of this project is classify alzheimer disease from magnetic ressonance images compressed in .nii files using convolutional neural networks architectures.
+> The goal of this project is classifying alzheimer disease from magnetic ressonance images compressed in .nii files using convolutional neural networks architectures.
 
 ## Developers
 
