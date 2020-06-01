@@ -8,7 +8,7 @@ from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import to_categorical
-from keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping
 import keras
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import os
+import json
 from tqdm import tqdm
 import pandas as pd
 import gc
@@ -26,7 +27,7 @@ from functions import save_metrics
 
 # Initialize the initial learning rate, epochs and batch size
 LEARNING_RATE = 1e-3
-EPOCHS = 15
+EPOCHS = 100
 BATCH_SIZE = 8
 
 # Defining paths
@@ -69,8 +70,8 @@ model_labels = pd.Series(labels).map(labels_dict).values
 model_labels = to_categorical(model_labels)
 
 # Split data into training and validation splits using 70-30
-print(['\n[INFO] splitting into training and validation samples...'])
-(X_train, X_val, y_train, y_val) = train_test_split(data, model_labels, test_size=.3, stratify=labels, random_state=42)
+print('\n[INFO] splitting into training and validation samples...')
+(X_train, X_val, y_train, y_val) = train_test_split(data, model_labels, test_size=.2, stratify=labels, random_state=42)
 
 print('Train size:', X_train.shape)
 print('Validation size:', X_val.shape)
@@ -122,10 +123,10 @@ H = model.fit(
     validation_data=(X_val, y_val),
     validation_steps=len(X_val) // BATCH_SIZE,
     epochs=EPOCHS,
-    callbacks=[EarlyStopping(monitor='val_loss', patience=2, verbose=1, restore_best_weights=True)]
+    callbacks=[early_stopping]
 )
 end = time() - begin
-print(f'Trained in {np.round(end)} seconds.')
+print(f'Trained in {np.round(end / 60, 2)} minutes.')
 
 # Garbage collector
 gc.collect()
@@ -133,7 +134,12 @@ gc.collect()
 # Saving CNN weights
 if 'model' not in os.listdir(): 
     os.mkdir('model')
-print('\n[INFO] Saving weights in {}'.format(os.path.join('model', 'model_weights.h5')))
+print('\n[INFO] Saving model...')
+
+model_json = model.to_json()
+with open(os.path.join('model', 'model_json.json'), "w") as json_file:
+    json.dump(model_json, json_file)
+
 model.save_weights(os.path.join('model', 'model_weights.h5'))
 
 # Making predictions on the validation set
@@ -151,12 +157,13 @@ print(classification_report(
     target_names=labels_names))
 print()
 
+# Saving metrics in models folder
 save_metrics(model, X_val, y_val, labels_names, BATCH_SIZE, 'model')
 
 # plot the training loss and accuracy
 print('\n[INFO] saving training metrics...')
 plt.style.use('ggplot')
-plt.figure(figsize=(16,10))
+plt.figure(figsize=(16,8))
 plt.plot(np.arange(0, EPOCHS), H.history['loss'], label='train_loss')
 plt.plot(np.arange(0, EPOCHS), H.history['val_loss'], label='val_loss')
 plt.plot(np.arange(0, EPOCHS), H.history['accuracy'], label='train_acc')
