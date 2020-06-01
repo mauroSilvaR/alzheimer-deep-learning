@@ -117,6 +117,15 @@ print()
 # Train the head of network
 print('\n[INFO] training head...')
 begin = time()
+
+# Define early stopping
+early_stopping = EarlyStopping(
+    monitor='val_auc', 
+    verbose=1,
+    patience=10,
+    mode='max',
+    restore_best_weights=True)
+
 H = model.fit(
     trainAug.flow(X_train, y_train, batch_size=BATCH_SIZE),
     steps_per_epoch=len(X_train) // BATCH_SIZE,
